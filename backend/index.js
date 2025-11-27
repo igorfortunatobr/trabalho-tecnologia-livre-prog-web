@@ -5,6 +5,7 @@ const usuarioController = require('./api/controller/usuarioController');
 const categoriaController = require('./api/controller/categoriaController');
 const transacaoController = require('./api/controller/transacaoController');
 const authController = require('./api/controller/auth/authController');
+const relatorioController = require('./api/controller/relatorioController')
 const ENVIRONMENT = require('./api/environment/environment')
 const UTILS = require('./api/environment/utils')
 const cors = require("cors");
@@ -41,6 +42,7 @@ app.use(verificarToken);
 // Rotas privadas
 app.use('/categorias', categoriaController);
 app.use('/transacoes', transacaoController);
+app.use('/relatorio', relatorioController);
 
 const adminController = require('./api/controller/adminController');
 const { verificarAdmin } = require('./api/middleware/adminMiddleware');
