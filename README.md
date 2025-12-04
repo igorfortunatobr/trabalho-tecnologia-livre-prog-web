@@ -1,3 +1,8 @@
+## Autores
+- IGOR ABREU FORTUNATO
+- MARCOS VINICIUS PAIVA CARVALHAR
+- PEDRO HENRIQUE SANTANA QUINTILIANO
+
 # FinControl
 
 FinControl é uma aplicação web moderna para controle financeiro pessoal, desenvolvida como trabalho da disciplina de Programação Web - Desenvolvimento com Tecnologia Livre.
@@ -61,5 +66,3 @@ O objetivo do FinControl é fornecer uma interface intuitiva e eficiente para qu
     ```
 4.  Acesse `http://localhost:3000` no seu navegador.
 
-## Autores
--   Igor Fortunato
