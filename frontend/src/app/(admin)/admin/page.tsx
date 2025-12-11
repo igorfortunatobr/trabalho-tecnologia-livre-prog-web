@@ -17,6 +17,7 @@ interface Categoria {
 }
 
 interface Transacao {
+    idUsuario: number;
     id: number;
     descricao: string;
     valor: number;
@@ -24,6 +25,7 @@ interface Transacao {
 }
 
 interface CategoriaTransacao {
+    idUsuario: number;
     id: number;
     idCategoria: number;
     idTransacao: number;
@@ -111,12 +113,14 @@ export default function AdminDashboard() {
                                         )}
                                         {activeTab === 'categories' && (
                                             <>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">ID Usuário</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">ID</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Nome</th>
                                             </>
                                         )}
                                         {activeTab === 'transactions' && (
                                             <>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">ID Usuário</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">ID</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Descrição</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Valor</th>
@@ -146,6 +150,7 @@ export default function AdminDashboard() {
                                     {activeTab === 'categories' &&
                                         categorias.map((c) => (
                                             <tr key={c.id} className="hover:bg-gray-700 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{c.idUsuario}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{c.id}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{c.nome}</td>
                                             </tr>
@@ -153,6 +158,7 @@ export default function AdminDashboard() {
                                     {activeTab === 'transactions' &&
                                         transacoes.map((t) => (
                                             <tr key={t.id} className="hover:bg-gray-700 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{t.idUsuario}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{t.id}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{t.descricao}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">R$ {t.valor}</td>
