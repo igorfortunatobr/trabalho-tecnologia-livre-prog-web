@@ -12,6 +12,7 @@ interface User {
 }
 
 interface Categoria {
+    idUsuario: number;
     id: number;
     nome: string;
 }
@@ -25,7 +26,6 @@ interface Transacao {
 }
 
 interface CategoriaTransacao {
-    idUsuario: number;
     id: number;
     idCategoria: number;
     idTransacao: number;
