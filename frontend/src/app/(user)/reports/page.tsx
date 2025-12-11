@@ -74,7 +74,7 @@ export default function ReportsPage() {
                         >
                             <option value="transacoes">Transações</option>
                             <option value="transacaoCategoria">Transação por Categoria</option>
-                            <option value="gastosCategoria">Gastos por Categoria</option>
+                            <option value="gastosCategoria">Totais por Categoria</option>
                         </select>
                     </div>
 
@@ -141,6 +141,16 @@ export default function ReportsPage() {
                                         className="text-purple-600 focus:ring-purple-600 bg-gray-700 border-gray-600"
                                     />
                                     Receitas
+                                </label>
+                                <label className="flex items-center gap-2 text-gray-300">
+                                    <input
+                                        type="radio"
+                                        value="3"
+                                        checked={tipoTransacao === '3'}
+                                        onChange={(e) => setTipoTransacao(e.target.value)}
+                                        className="text-purple-600 focus:ring-purple-600 bg-gray-700 border-gray-600"
+                                    />
+                                    Ambos
                                 </label>
                             </div>
                         </div>

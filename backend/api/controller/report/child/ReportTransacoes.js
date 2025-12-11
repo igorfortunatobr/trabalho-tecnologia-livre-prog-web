@@ -16,7 +16,7 @@ class ReportTransacoes extends RelatorioStrategy {
                     ]
                 };
             }
-            if (this.filtro.tipoTransacao)
+            if (this.filtro.tipoTransacao !== '3')
                 whereClause.tipo = this.filtro.tipoTransacao;
         }
 
