@@ -10,16 +10,22 @@ interface Categoria {
     nome: string;
 }
 
+interface TransacaoCategoria {
+    idCategoria: number;
+    valor: number;
+    nome?: string; // Optional for display purposes
+}
+
 interface Transacao {
     id: number;
     data: string;
     tipo: string; // "1" for Expense, "2" for Income
     valor: number;
     descricao: string;
-    CategoriaTransacaos?: {
-        Categoria: {
-            nome: string;
-        };
+    categorias?: {
+        idCategoria: number;
+        valor: number;
+        nome: string;
     }[];
 }
 
@@ -31,10 +37,10 @@ export default function TransactionsPage() {
 
     // Form states
     const [descricao, setDescricao] = useState('');
-    const [valor, setValor] = useState('');
-    const [data, setData] = useState('');
+    // const [valor, setValor] = useState(''); // Removed, calculated from categories
+    const [data, setData] = useState(new Date().toISOString().split('T')[0]);
     const [tipo, setTipo] = useState('1'); // Default to Expense
-    const [categoriaId, setCategoriaId] = useState('');
+    const [selectedCategories, setSelectedCategories] = useState<TransacaoCategoria[]>([]);
 
     useEffect(() => {
         loadTransacoes();
@@ -62,18 +68,25 @@ export default function TransactionsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const totalValor = selectedCategories.reduce((acc, curr) => acc + curr.valor, 0);
+
+            if (selectedCategories.length === 0) {
+                toast.error('Adicione pelo menos uma categoria.');
+                return;
+            }
+
             const payload = {
                 transacao: {
                     descricao,
-                    valor: parseFloat(valor),
+                    valor: totalValor,
                     data,
                     tipo
                 },
-                categorias: [{ idCategoria: parseInt(categoriaId), valor: parseFloat(valor) }]
+                categorias: selectedCategories.map(c => ({ idCategoria: c.idCategoria, valor: c.valor }))
             };
 
             if (editingTransacao) {
-                await api.put(`/transacoes/${editingTransacao.id}`, payload);
+                await api.put(`/transacoes/id/${editingTransacao.id}`, payload);
                 toast.success('Transação atualizada com sucesso');
             } else {
                 await api.post('/transacoes', payload);
@@ -87,13 +100,31 @@ export default function TransactionsPage() {
         }
     };
 
-    const handleEdit = (transacao: Transacao) => {
-        setEditingTransacao(transacao);
-        setDescricao(transacao.descricao);
-        setValor(transacao.valor.toString());
-        setData(transacao.data.split('T')[0]);
-        setTipo(transacao.tipo);
-        setShowModal(true);
+    const handleEdit = async (transacao: Transacao) => {
+        try {
+            // Fetch full details to get categories
+            const response = await api.get(`/transacoes/id/${transacao.id}`);
+            const fullTransacao = response.data;
+
+            setEditingTransacao(fullTransacao);
+            setDescricao(fullTransacao.descricao);
+            setData(fullTransacao.data.split('T')[0]);
+            setTipo(fullTransacao.tipo);
+
+            if (fullTransacao.categorias) {
+                setSelectedCategories(fullTransacao.categorias.map((c: any) => ({
+                    idCategoria: c.idCategoria,
+                    valor: c.valor,
+                    nome: c.nome
+                })));
+            } else {
+                setSelectedCategories([]);
+            }
+
+            setShowModal(true);
+        } catch (error) {
+            toast.error('Erro ao carregar detalhes da transação');
+        }
     };
 
     const handleDelete = async (id: number) => {
@@ -111,11 +142,30 @@ export default function TransactionsPage() {
     const closeModal = () => {
         setEditingTransacao(null);
         setDescricao('');
-        setValor('');
-        setData('');
+        setData(new Date().toISOString().split('T')[0]);
         setTipo('1');
-        setCategoriaId('');
+        setSelectedCategories([]);
         setShowModal(false);
+    };
+
+    const addCategory = () => {
+        setSelectedCategories([...selectedCategories, { idCategoria: 0, valor: 0 }]);
+    };
+
+    const removeCategory = (index: number) => {
+        const newCategories = [...selectedCategories];
+        newCategories.splice(index, 1);
+        setSelectedCategories(newCategories);
+    };
+
+    const updateCategory = (index: number, field: keyof TransacaoCategoria, value: any) => {
+        const newCategories = [...selectedCategories];
+        newCategories[index] = { ...newCategories[index], [field]: value };
+        setSelectedCategories(newCategories);
+    };
+
+    const calculateTotalValue = () => {
+        return selectedCategories.reduce((acc, curr) => acc + (curr.valor || 0), 0);
     };
 
     const calculateTotals = () => {
@@ -165,7 +215,6 @@ export default function TransactionsPage() {
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Data</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Descrição</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Categoria</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Valor</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Ações</th>
                         </tr>
@@ -177,9 +226,6 @@ export default function TransactionsPage() {
                                     {new Date(transacao.data).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{transacao.descricao}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                                    {transacao.CategoriaTransacaos?.map(ct => ct.Categoria.nome).join(', ') || '-'}
-                                </td>
                                 <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${transacao.tipo === '1' ? 'text-red-400' : 'text-green-400'}`}>
                                     {transacao.tipo === '1' ? '-' : '+'} R$ {transacao.valor.toFixed(2)}
                                 </td>
@@ -219,17 +265,6 @@ export default function TransactionsPage() {
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Valor</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={valor}
-                                    onChange={(e) => setValor(e.target.value)}
-                                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white placeholder-gray-400"
-                                    required
-                                />
-                            </div>
-                            <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Data</label>
                                 <input
                                     type="date"
@@ -251,20 +286,59 @@ export default function TransactionsPage() {
                                 </select>
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Categoria</label>
-                                <select
-                                    value={categoriaId}
-                                    onChange={(e) => setCategoriaId(e.target.value)}
-                                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white"
-                                    required
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Categorias</label>
+                                {selectedCategories.map((cat, index) => (
+                                    <div key={index} className="flex gap-2 mb-2 items-start">
+                                        <div className="flex-1">
+                                            <select
+                                                value={cat.idCategoria}
+                                                onChange={(e) => updateCategory(index, 'idCategoria', parseInt(e.target.value))}
+                                                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white"
+                                                required
+                                            >
+                                                <option value="0">Selecione uma categoria</option>
+                                                {categorias.map((c) => (
+                                                    <option key={c.id} value={c.id}>
+                                                        {c.nome}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="w-32">
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                placeholder="Valor"
+                                                value={cat.valor}
+                                                onChange={(e) => updateCategory(index, 'valor', parseFloat(e.target.value))}
+                                                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none text-white placeholder-gray-400"
+                                                required
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeCategory(index)}
+                                            className="p-2 text-red-400 hover:bg-gray-700 rounded-lg transition-colors"
+                                            title="Remover categoria"
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addCategory}
+                                    className="mt-2 text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
                                 >
-                                    <option value="">Selecione uma categoria</option>
-                                    {categorias.map((cat) => (
-                                        <option key={cat.id} value={cat.id}>
-                                            {cat.nome}
-                                        </option>
-                                    ))}
-                                </select>
+                                    <FaPlus size={12} /> Adicionar Categoria
+                                </button>
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-300 mb-2">Valor Total</label>
+                                <div className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-300">
+                                    R$ {calculateTotalValue().toFixed(2)}
+                                </div>
                             </div>
                             <div className="flex justify-end gap-2">
                                 <button
